@@ -46,25 +46,34 @@ public class PortoDAO {
 	/*
 	 * Dato l'id ottengo l'articolo.
 	 */
-	public Paper getArticolo(int eprintid) {
+	public Paper getArticolo(Author primo, Author secondo) {
 
-		final String sql = "SELECT * FROM paper where eprintid=?";
+		final String sql = "SELECT * " + 
+				"FROM paper " + 
+				"WHERE eprintid IN ( " + 
+				"SELECT c1.eprintid " + 
+				"FROM creator c1, creator c2 " + 
+				"WHERE c1.eprintid=c2.eprintid AND c1.authorid= ? AND c2.authorid= ? )";
 
 		try {
 			Connection conn = DBConnect.getConnection();
 			PreparedStatement st = conn.prepareStatement(sql);
-			st.setInt(1, eprintid);
-
+			st.setInt(1, primo.getId());
+			st.setInt(2, secondo.getId());
 			ResultSet rs = st.executeQuery();
 
 			if (rs.next()) {
 				Paper paper = new Paper(rs.getInt("eprintid"), rs.getString("title"), rs.getString("issn"),
 						rs.getString("publication"), rs.getString("type"), rs.getString("types"));
+				conn.close();
 				return paper;
 			}
+			else {
+				conn.close();
+				return null;
+			}
 
-			conn.close();
-			return null;
+			
 
 		} catch (SQLException e) {
 			 e.printStackTrace();
